@@ -1,0 +1,21 @@
+{
+
+    "manifest_version": 2,
+    "name": "OurApp",
+    "version": "1.0",
+  
+    "description": "Cool browser extension",
+  
+    "content_scripts": [
+      {
+        "matches": ["http://127.0.0.1/*"],
+        "js": ["test.js"]
+      }
+    ],
+
+    "permissions": [
+      "storage"
+    ]
+  
+  }
+  
