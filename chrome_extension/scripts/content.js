@@ -1,34 +1,3 @@
-/*
-function handleCommand(event) {
-    // Handles both mouse clicks and keyboard
-    // activate with Enter or Space
-  
-    // Keypresses other then Enter and Space should not trigger a command
-    if (
-      event instanceof KeyboardEvent &&
-      event.key !== "Enter" &&
-      event.key !== " "
-    ) {
-      return;
-    }
-  
-    // Get the new name value from the input element
-    const newNameInput = document.getElementById("newName");
-    const name = newNameInput.value;
-    newNameInput.value = ""; // clear the text field
-    newNameInput.focus(); // give the text field focus to enable entering and additional name.
-  
-    // Don't add blank entries to the list.
-    if (name.length > 0) {
-      const listItem = document.createElement("li");
-      listItem.appendChild(document.createTextNode(name));
-  
-      // Add the new name to the list.
-      const list = document.getElementById("nameList");
-      list.appendChild(listItem);
-    }
-}
-*/
 function getSignature() {
     return Math.random(100000)
 }
@@ -58,8 +27,11 @@ function handleCommand(event) {
     var tweetTextElements = document.getElementsByClassName(tweetTextClass);
     var tweetTextElement = tweetTextElements[0]
     console.log(tweetTextElement.firstElementChild.innerText)
-    tweetTextElement.firstElementChild.innerText = tweetTextElement.firstElementChild.innerText + "Hello from SocialSign"
+    //tweetTextElement.firstElementChild.innerText = tweetTextElement.firstElementChild.innerText + "Hello from SocialSign"
+    navigator.clipboard.writeText(getSignature());
     console.log(tweetTextElement.firstElementChild.innerText)
+    console.log(Object.keys(tweetTextElement.parentElement.parentElement.parentElement))
+    console.log(tweetTextElement.parentElement.parentElement.parentElement)
 }
 
 const tweetButtonClass = ".css-1dbjc4n.r-l5o3uw.r-42olwf.r-sdzlij.r-1phboty.r-rs99b7.r-19u6a5r.r-2yi16.r-1qi8awa.r-icoktb.r-1ny4l3l.r-ymttw5.r-o7ynqc.r-6416eg.r-lrvibr"
@@ -71,7 +43,6 @@ waitForElm(tweetButtonClass).then((elm) => {
     var elemBar = document.getElementsByClassName(elemBarClass);
     newElem = elemBar[0].children[2].cloneNode(true)
     elemBar[0].lastChild.insertAdjacentElement("beforebegin", newElem)
-    console.log(elemBar[0].children[5])
     elemBar[0].children[6].firstChild.firstChild.firstChild.innerHTML = `<path d="M0.017,23.462c-0.011,0.14,0.037,0.275,0.132,0.378C0.243,23.942,0.376,24,0.516,24H13.59c0.139,0,0.272-0.058,0.367-0.16
     c0.094-0.103,0.143-0.239,0.131-0.378c-0.232-3.082-1.894-4.849-5.072-5.393V17h0.5c0.275,0,0.5-0.225,0.484-0.5v-2
     c0.016-0.276-0.209-0.5-0.484-0.5h-5c-0.276,0-0.5,0.224-0.5,0.5v2c0,0.275,0.224,0.5,0.5,0.5h0.5v1.069
