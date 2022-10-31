@@ -10,15 +10,21 @@
         "128": "images/icon-128.png"
     },
     "action": {
-      "default_popup": "hello.html"
+      "default_popup": "extension_popup.html"
     },
     "content_scripts": [
         {
-          "js": ["scripts/content.js"],
+          "js": ["./scripts/content.js"],
           "matches": [
             "https://twitter.com/compose/tweet",
             "https://twitter.com/home"
           ]
         }
-      ]
+      ],
+    "background": {
+      "service_worker": "./background.js"
+    },
+    "permissions": [
+      "storage"
+    ]
 }

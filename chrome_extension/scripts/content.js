@@ -1,5 +1,11 @@
-function getSignature() {
-    return Math.random(100000)
+function getSignature(msg) {
+    console.log("Copied to Clipboard again");
+    chrome.runtime.sendMessage({route: "generate_keypair", message: msg}, function(response) {
+        console.log(response);
+        navigator.clipboard.writeText(response);
+        console.log("Copied to Clipboard");
+    });
+    
 }
 
 function waitForElm(selector) {
@@ -23,15 +29,10 @@ function waitForElm(selector) {
 }
 
 function handleCommand(event) {
-    console.log("TWEETED")
     var tweetTextElements = document.getElementsByClassName(tweetTextClass);
     var tweetTextElement = tweetTextElements[0]
-    console.log(tweetTextElement.firstElementChild.innerText)
-    //tweetTextElement.firstElementChild.innerText = tweetTextElement.firstElementChild.innerText + "Hello from SocialSign"
-    navigator.clipboard.writeText(getSignature());
-    console.log(tweetTextElement.firstElementChild.innerText)
-    console.log(Object.keys(tweetTextElement.parentElement.parentElement.parentElement))
-    console.log(tweetTextElement.parentElement.parentElement.parentElement)
+    var msg = tweetTextElement.firstElementChild.innerText;
+    getSignature(msg);
 }
 
 const tweetButtonClass = ".css-1dbjc4n.r-l5o3uw.r-42olwf.r-sdzlij.r-1phboty.r-rs99b7.r-19u6a5r.r-2yi16.r-1qi8awa.r-icoktb.r-1ny4l3l.r-ymttw5.r-o7ynqc.r-6416eg.r-lrvibr"
@@ -55,4 +56,5 @@ waitForElm(tweetButtonClass).then((elm) => {
         c1.282-2.235,1.431-4.195,0.415-5.266C23.305,0.464,23.299,0.443,23.283,0.427z"/>`
     elemBar[0].children[6].onclick = handleCommand
 });
+
 console.log("Loaded")
