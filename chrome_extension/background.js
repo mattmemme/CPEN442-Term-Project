@@ -2,13 +2,14 @@ const key_filepath = "private"
 
 
 async function generate_signature(msg) {
+    await create_secret();
     var key = await sign(msg);
     return key
 }
 
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.route === "generate_keypair") {
+    if (request.route === "generate_signature") {
         console.log(`message before = ${request.message}`);
         generate_signature(request.message).then(sendResponse);
         return true;
@@ -17,7 +18,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 })
 
 
-async function create_secret() {
+export async function create_secret() {
     var key = await read_key_from_ls_promise(key_filepath);
     if (!key) {
         key = await generate_key();
@@ -95,4 +96,21 @@ function _arrayBufferToBase64( buffer ) {
         binary += String.fromCharCode( bytes[ i ] );
     }
     return btoa( binary );
+}
+
+// From 
+function _base64ToArrayBuffer(base64) {
+    var binary_string = window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+
+// Expect base64 signature
+async function verify_msg(msg, signatureBase64){
+
 }

@@ -1,11 +1,10 @@
 function getSignature(msg) {
     console.log("Copied to Clipboard again");
-    chrome.runtime.sendMessage({route: "generate_keypair", message: msg}, function(response) {
+    chrome.runtime.sendMessage({route: "generate_signature", message: msg}, function(response) {
         console.log(response);
         navigator.clipboard.writeText(response);
         console.log("Copied to Clipboard");
     });
-    
 }
 
 function waitForElm(selector) {
