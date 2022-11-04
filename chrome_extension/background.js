@@ -2,7 +2,6 @@ const key_filepath = "private"
 
 
 async function generate_signature(msg) {
-    await create_secret();
     var key = await sign(msg);
     return key
 }
