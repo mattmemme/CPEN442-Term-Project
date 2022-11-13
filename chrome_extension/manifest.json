@@ -18,7 +18,9 @@
           "matches": [
             "https://twitter.com/compose/tweet",
             "https://twitter.com/home"
-          ]
+          ],
+          "all_frames": true,
+          "match_about_blank": true
         }
       ],
     "background": {
