@@ -2,8 +2,20 @@ function getSignature(msg) {
     console.log("Copied to Clipboard again");
     chrome.runtime.sendMessage({route: "generate_signature", message: msg}, function(response) {
         console.log(response);
-        navigator.clipboard.writeText(response);
-        console.log("Copied to Clipboard");
+
+        var snackbar = document.getElementById('snackbar');
+        if (msg.charCodeAt(0) == 10) {
+          snackbar.innerText = "Message cannot be empty!";
+        }
+        else if (response.localeCompare(msg) == 0) {
+          snackbar.innerText = "Key does not exist! Click extension icon."
+        }
+        else {
+          navigator.clipboard.writeText(response);
+          snackbar.innerText = "Copied to clipboard!";
+        }
+        snackbar.className = "show";
+        setTimeout(function(){ snackbar.className = snackbar.className.replace("show", ""); }, 3000);
     });
 }
 
@@ -54,6 +66,11 @@ waitForElm(tweetButtonClass).then((elm) => {
         c0.275,0,0.5-0.225,0.5-0.5c0-0.276-0.225-0.5-0.5-0.5h-3.601l1.001-1h4.054c0.179,0,0.345-0.097,0.434-0.252
         c1.282-2.235,1.431-4.195,0.415-5.266C23.305,0.464,23.299,0.443,23.283,0.427z"/>`
     elemBar[0].children[6].onclick = handleCommand
+
+    var snackbar = document.createElement('div');
+    snackbar.id = "snackbar";
+    snackbar.innerText = "Copied to Clipboard";
+    document.getElementsByTagName('body')[0].appendChild(snackbar);
 });
 
 console.log("Loaded")

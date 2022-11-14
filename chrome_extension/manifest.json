@@ -18,7 +18,8 @@
           "matches": [
             "https://twitter.com/compose/tweet",
             "https://twitter.com/home"
-          ]
+          ],
+          "css": ["./styles/snackbar_styles.css"]
         }
       ],
     "background": {
