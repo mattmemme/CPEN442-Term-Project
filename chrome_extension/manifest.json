@@ -19,7 +19,9 @@
             "https://twitter.com/compose/tweet",
             "https://twitter.com/home"
           ],
-          "css": ["./styles/snackbar_styles.css"]
+          "css": ["./styles/snackbar_styles.css"],
+          "all_frames": true,
+          "match_about_blank": true
         }
       ],
     "background": {
