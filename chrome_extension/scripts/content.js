@@ -54,7 +54,11 @@ function createButton(elemBar) {
         c1.665,0,3.75-0.926,5.627-2.633c0.152-0.139,0.204-0.358,0.13-0.55C19.907,9.127,19.722,9,19.516,9h-4.102l1-1h4.601
         c0.275,0,0.5-0.225,0.5-0.5c0-0.276-0.225-0.5-0.5-0.5h-3.601l1.001-1h4.054c0.179,0,0.345-0.097,0.434-0.252
         c1.282-2.235,1.431-4.195,0.415-5.266C23.305,0.464,23.299,0.443,23.283,0.427z"/>`
+    elemBar[0].children[6].onclick = handleClick;
+    elemBar[0].children[6].id = 'sign-btn'
+}
 
+function drawSnackBar() {
     var snackbar = document.createElement('div');
     snackbar.id = "snackbar";
     snackbar.innerText = "Copied to Clipboard";
@@ -128,12 +132,27 @@ observer.observe(document.body, {
 */
 
 // Wait for template button to be inserted into DOM
-waitForElm(tweetButtonClass).then((elm) => {
-    console.log('Element is ready');
-    var elemBar = document.getElementsByClassName(elemBarClass);
-    createButton(elemBar);
-    elemBar[0].children[6].onclick = handleClick;
-});
+waitForElm('[aria-label="Home timeline"]').then((home_timeline) => {
+
+    const callback = (mutationList, observer) => {
+        for (const mutation of mutationList) {
+            if (mutation.type === 'childList') {
+                console.log('A child node has been added or removed!')
+                
+                var upload_media_btn = document.querySelector('[aria-label="Add photos or video"]');
+                var sign_btn = document.getElementById('sign-btn');
+
+                if (upload_media_btn && sign_btn === null) {
+                    var elem_bar = document.getElementsByClassName(elemBarClass);
+                    createButton(elem_bar);
+                    drawSnackBar();
+                }
+            }
+        }
+    }
+    const observer = new MutationObserver(callback);
+    observer.observe(home_timeline, { childList: true, subtree: true })
+})
 
 setInterval(checkTweets, 1000)
 
