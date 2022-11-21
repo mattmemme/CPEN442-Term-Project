@@ -1,0 +1,15 @@
+conn = new Mongo();
+db = conn.getDB("SocialSignDB");
+db.dropDatabase();
+imgHost = '/';
+
+result = db.pubkeys.insert([
+	{
+		_id: 'myboielon',
+        twitter_id: '44196397',
+        public_key: 'qwerty-wohoo',
+        recovery_code: ['asd', 'bcd']
+	},
+]);
+
+print(result);
