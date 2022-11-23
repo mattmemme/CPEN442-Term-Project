@@ -49,4 +49,83 @@ Database.prototype.getPublicKey = function(twitterId) {
 	)
 }
 
+
+Database.prototype.storePublicKey = function(document) {
+    let { twitterId, publicKey, recoveryCodes } = document;
+
+	return this.connected.then(db =>
+		new Promise((resolve, reject) => {
+			if (!twitterId || !publicKey) {
+				reject(new Error("Invalid input"));
+			}
+
+			db.collection('pubkeys').findOne({ twitter_id: twitterId }).then(dbEntry => {
+				if (dbEntry) {
+					resolve(null);
+				} else {
+					var pubKeyEntry = {
+						"twitter_id": twitterId,
+						"public_key": publicKey,
+						"recovery_codes": recoveryCodes
+					}
+		
+					db.collection('pubkeys').insertOne(pubKeyEntry).then(() => {
+						resolve(pubKeyEntry);
+					}).catch(() => {
+						reject(new Error("Issue accepting publicKey"));
+					})
+				}
+			})
+        })
+	)
+}
+
+Database.prototype.getRecoveryCodes = function(twitterId) {
+    return this.connected.then(db =>
+		new Promise((resolve, reject) => {
+			if (!twitterId) {
+                reject(new Error('Invalid input'));
+			}
+
+            db.collection('pubkeys').findOne({ twitter_id: twitterId }).then(dbEntry => {
+                if (dbEntry && dbEntry.recovery_codes) {
+                    resolve(dbEntry.recovery_codes);
+                } else {
+                    reject(new Error('No recovery codes found'));
+                }
+            }).catch((err) => {
+                reject(new Error(err))
+            })
+        })
+	)
+}
+
+Database.prototype.updatePublicKey = function(twitterId, newPublicKey, newRecoveryCodes) {
+    return this.connected.then(db =>
+		new Promise((resolve, reject) => {
+			if (!twitterId) {
+                reject(new Error('Invalid input'));
+			}
+
+			const updateDoc = {
+				$set: {
+					public_key: newPublicKey,
+					recovery_codes: newRecoveryCodes
+				}
+			}
+
+            db.collection('pubkeys').updateOne({ twitter_id: twitterId }, updateDoc).then(dbEntry => {
+				console.log(dbEntry);
+                if (dbEntry && dbEntry.acknowledged && dbEntry.modifiedCount == 1) {
+                    resolve(dbEntry.modifiedCount);
+                } else {
+                    reject(new Error('No key found'));
+                }
+            }).catch((err) => {
+                reject(new Error(err))
+            })
+        })
+	)
+}
+
 module.exports = Database;
