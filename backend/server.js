@@ -57,7 +57,7 @@ app.get("/public_key/:handle", async (req,res) => {
     
     try {  
         let publicKey = await db.getPublicKey(twitterID);
-        res.send(publicKey);
+        res.json({public_key: publicKey});
         return;
     } catch (e) {
         console.log(e);
@@ -94,6 +94,7 @@ app.get('/callback', async(req, res) => {
 
   const tempClient = new TwitterApi({ appKey: CONFIG.API_KEY, appSecret: CONFIG.API_SECRET, accessToken: token, accessSecret: savedSecret });
   const { accessToken, accessSecret, screenName, userId } = await tempClient.login(verifier);
+  // Set userID ie. authenticate user.
   req.session.userId = userId;
   res.render('callback', { accessToken, accessSecret, screenName, userId });
 });
@@ -184,6 +185,15 @@ function verifyRecoveryCode(recoveryCode, hashedCodes){
     }
     return false;
 }
+
+app.get('/oauth', async(req, res) => {
+    const link = await requestClient.generateAuthLink(`https://${CONFIG.DOMAIN}:${CONFIG.PORT}/callback`);
+    // Save token secret to use it after callback
+    req.session.oauthToken = link.oauth_token;
+    req.session.oauthSecret = link.oauth_token_secret;
+
+    res.json({url: link.url})
+})
 
 const requestClient = new TwitterApi({appKey: CONFIG.API_KEY, appSecret: CONFIG.API_SECRET});
 const appOnlyClient = new TwitterApi(CONFIG.BEARER_TOKEN);
