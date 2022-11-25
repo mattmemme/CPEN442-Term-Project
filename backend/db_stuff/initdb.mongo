@@ -1,0 +1,5 @@
+conn = new Mongo();
+db = conn.getDB("SocialSignDB");
+db.dropDatabase();
+imgHost = '/';
+
