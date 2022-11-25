@@ -1,5 +1,7 @@
 const key_filepath = "private"
 
+const DOMAIN = 'cpen442project.localhost'
+const PORT = '3000'
 
 async function generate_signature(msg) {
     var key = await sign(msg);
@@ -86,6 +88,15 @@ var read_key_from_ls_promise = function(id) {
     })
 }
 
+export async function getPublicKeyFromLS(){
+    let key_pair = await read_key_from_ls_promise(key_filepath);
+
+    if(!key_pair)
+        return null;
+
+    return key_pair.publicKey;
+}
+
 // From https://stackoverflow.com/questions/9267899/arraybuffer-to-base64-encoded-string
 function _arrayBufferToBase64( buffer ) {
     var binary = '';
@@ -108,8 +119,42 @@ function _base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
+// Gets the public key from server.js for a given handle
+async function getPublicKeyAndTime(handle) {
+    let publicKey = null;
+    try {
+        let response = await fetch(`https://${DOMAIN}:${PORT}/public_key/` + handle);
+        
+        if(response.ok) {
+            publicKey = response.json();
+        }
+    } catch(e) {
+        console.log(e)
+    } finally {
+        return retVal;
+    }
+}
 
 // Expect base64 signature
-async function verify_msg(msg, signatureBase64){
-
+async function verifyMsg(handle, msg, signatureBase64){
+    let publicKeyAndTime = await getPublicKey(handle);
+    let publicKey = publicKeyAndTime.public_key;
+    let timePublished = publicKeyAndTime.time_published;
+    if(!publicKey)
+        return {found: false};
+    let signature = _base64ToArrayBuffer(signatureBase64);
+    return {
+            timePublished: timePublished, 
+            found: true, 
+            verified: await crypto.subtle.verify({name: "ECDSA", hash: {name: "SHA-256"}}, publicKey, signature, msg)
+        };
 }
+/*
+chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
+    if (request.route === "verifyMsg") {
+        response = await verifyMsg(request.handle, request.msg, request.signature);
+        sendResponse(response);
+
+                return true
+    }   return false;
+})*/
