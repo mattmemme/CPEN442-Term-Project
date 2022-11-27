@@ -108,8 +108,43 @@ function _base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
+// Gets the public key from server.js for a given handle
+async function getPublicKeyAndTime(handle) {
+    let publicKey = null;
+    try {
+        let response = await fetch(`https://${DOMAIN}:${PORT}/public_key/` + handle);
+        
+        if(response.ok) {
+            publicKey = response.json();
+        }
+    } catch(e) {
+        console.log(e)
+    } finally {
+        return retVal;
+    }
+}
 
 // Expect base64 signature
-async function verify_msg(msg, signatureBase64){
-
+async function verifyMsg(handle, msg, signatureBase64){
+    let publicKeyAndTime = await getPublicKeyAndTime(handle);
+    let publicKey = publicKeyAndTime.public_key;
+    let timePublished = publicKeyAndTime.time_published;
+    if(!publicKey)
+        return {found: false};
+    let signature = _base64ToArrayBuffer(signatureBase64);
+    return {
+            timePublished: timePublished, 
+            found: true, 
+            verified: await crypto.subtle.verify({name: "ECDSA", hash: {name: "SHA-256"}}, publicKey, signature, msg)
+        };
 }
+
+chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
+    if (request.route === "verifyMsg") {
+        console.log("Got Request")
+        let response = await verifyMsg(request.handle, request.msg, request.signature);
+        sendResponse(response);
+        return true
+    }   
+    return false;
+})

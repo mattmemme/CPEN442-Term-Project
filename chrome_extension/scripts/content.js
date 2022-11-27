@@ -12,7 +12,7 @@ function getSignature(msg) {
           snackbar.innerText = "Key does not exist! Click extension icon."
         }
         else {
-          navigator.clipboard.writeText(response);
+          navigator.clipboard.writeText('## ' + response + ' ##');
           snackbar.innerText = "Copied to clipboard!";
         }
         snackbar.className = "show";
@@ -66,17 +66,16 @@ function handleClick(event) {
     getSignature(msg);
 }
 
-function getVerifiedIcon(tweet_text) {
+function getVerifiedIcon(found, verified) {
     // PLACEHOLDER
     // TODO: Replace this with code that actually verifies tweet
-    let x = tweet_text.length % 3;
-    if (x == 1) {
+    if (!found) {
         // Missing signature
-        return `<path fill="#F1F500" ${warning_icon.d1}/>
-        <path fill="#F1F500" ${warning_icon.d2}/>
-        <circle fill="#F1F500" ${warning_icon.circle}/>`
+        return `<path fill="#F2D707" ${warning_icon.d1}/>
+        <path fill="#F2D707" ${warning_icon.d2}/>
+        <circle fill="#F2D707" ${warning_icon.circle}/>`
     }
-    else if (x == 2) {
+    else if (verified) {
         // Success
         return `<path fill="#2FFF0E" ${verified_icon.d1}/>
         <path fill="#2FFF0E" ${verified_icon.d2}/>`
@@ -88,6 +87,17 @@ function getVerifiedIcon(tweet_text) {
     }
 }
 
+function insertVerifiedIcon(element, icon) {
+    // Add new element
+    let new_elem = element.lastChild.cloneNode(true);
+    new_elem.firstChild.setAttribute("class", "auth-icon");
+    element.lastChild.insertAdjacentElement("afterend", new_elem);
+
+    // Change icon and set colour
+    let svg_icon = new_elem.getElementsByTagName("g")[0]
+    svg_icon.innerHTML = icon;
+}
+
 function checkTweets() {
     let tweets = document.getElementsByClassName("css-1dbjc4n r-1iusvr4 r-16y2uox r-1777fci r-kzbkwu");
     for (let i = 0; i < tweets.length; i++) {
@@ -96,18 +106,30 @@ function checkTweets() {
         // Insert icon if it does not exist
         let tweet_bar = tweet.getElementsByClassName("css-1dbjc4n r-1ta3fxp r-18u37iz r-1wtj0ep r-1s2bzr4 r-1mdbhws")[0];
         if (!tweet_bar.getElementsByClassName("auth-icon").length) {
-            // Get icon colour based on tweet text
-            let tweet_text_span = tweet.getElementsByClassName("css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0")[0];
-            let tweet_text = tweet_text_span;
+            // Get text and parse it
+            let tweet_text_elem = tweet.getElementsByClassName("css-901oao r-18jsvk2 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-bnwqim r-qvutc0")[0];
+            let tweet_text = tweet_text_elem.innerText;
+            let signature_arr = tweet_text.match('## [A-Za-z0-9+/=]{88} ##');
+            if (signature_arr) {
+                let signature = signature_arr[0].substring(3, signature_arr[0].length - 3);
+                
+                // Get handle
+                let handle_elem = tweet.getElementsByClassName("css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0");
+                let handle = handle_elem[0].innerText
 
-            // Add new element
-            let new_elem = tweet_bar.lastChild.cloneNode(true);
-            new_elem.firstChild.setAttribute("class", "auth-icon");
-            tweet_bar.lastChild.insertAdjacentElement("afterend", new_elem);
+                // Get Message
+                let msg = tweet_text.replace(signature_arr[0], '');
 
-            // Change icon and set colour
-            let svg_icon = new_elem.getElementsByTagName("g")[0]
-            svg_icon.innerHTML = getVerifiedIcon(tweet_text.innerHTML);
+                chrome.runtime.sendMessage({route: "verifyMsg", handle: handle, msg: msg, signature: signature}, function(response) {
+                    console.log("Got response")
+                    let icon = getVerifiedIcon(response['found'], response['verified']);
+                    insertVerifiedIcon(tweet_bar, icon);
+                })
+            }
+            else {
+                let icon = getVerifiedIcon(false, false);
+                insertVerifiedIcon(tweet_bar, icon);
+            }
         }
     }
 }
