@@ -1,5 +1,7 @@
 const key_filepath = "private"
 
+const DOMAIN = 'cpen442project.localhost'
+const PORT = '3000'
 
 async function generate_signature(msg) {
     var key = await sign(msg);
@@ -84,6 +86,15 @@ var read_key_from_ls_promise = function(id) {
             resolve(result[id]);
         })
     })
+}
+
+export async function getPublicKeyFromLS(){
+    let key_pair = await read_key_from_ls_promise(key_filepath);
+
+    if(!key_pair)
+        return null;
+
+    return key_pair.publicKey;
 }
 
 // From https://stackoverflow.com/questions/9267899/arraybuffer-to-base64-encoded-string
