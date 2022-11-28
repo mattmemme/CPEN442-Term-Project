@@ -8,6 +8,15 @@ async function generate_signature(msg) {
     return key
 }
 
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    getPublicKeyFromLS().then(pubKey => {
+        if (!pubKey) {
+            chrome.action.setPopup({popup: "nokeys_popup.html"});
+        } else {
+            chrome.action.setPopup({popup: "haskeys_popup.html"});
+        }
+    });
+});
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.route === "generate_signature") {
