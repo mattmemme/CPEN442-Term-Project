@@ -62,13 +62,11 @@ function drawSnackBar() {
 function handleClick(event) {
     var tweetTextElements = document.getElementsByClassName(tweetTextClass);
     var tweetTextElement = tweetTextElements[0];
-    var msg = tweetTextElement.firstElementChild.innerText;
+    var msg = tweetTextElement.firstElementChild.innerText.trim();
     getSignature(msg);
 }
 
 function getVerifiedIcon(found, verified) {
-    // PLACEHOLDER
-    // TODO: Replace this with code that actually verifies tweet
     if (!found) {
         // Missing signature
         return `<path fill="#F2D707" ${warning_icon.d1}/>
@@ -88,13 +86,8 @@ function getVerifiedIcon(found, verified) {
 }
 
 function insertVerifiedIcon(element, icon) {
-    // Add new element
-    let new_elem = element.lastChild.cloneNode(true);
-    new_elem.firstChild.setAttribute("class", "auth-icon");
-    element.lastChild.insertAdjacentElement("afterend", new_elem);
-
     // Change icon and set colour
-    let svg_icon = new_elem.getElementsByTagName("g")[0]
+    let svg_icon = element.getElementsByTagName("g")[0]
     svg_icon.innerHTML = icon;
 }
 
@@ -106,6 +99,11 @@ function checkTweets() {
         // Insert icon if it does not exist
         let tweet_bar = tweet.getElementsByClassName("css-1dbjc4n r-1ta3fxp r-18u37iz r-1wtj0ep r-1s2bzr4 r-1mdbhws")[0];
         if (!tweet_bar.getElementsByClassName("auth-icon").length) {
+            // Add new element
+            let new_elem = tweet_bar.lastChild.cloneNode(true);
+            new_elem.firstChild.setAttribute("class", "auth-icon");
+            tweet_bar.lastChild.insertAdjacentElement("afterend", new_elem);
+
             // Get text and parse it
             let tweet_text_elem = tweet.getElementsByClassName("css-901oao r-18jsvk2 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-bnwqim r-qvutc0")[0];
             let tweet_text = tweet_text_elem.innerText;
@@ -114,21 +112,32 @@ function checkTweets() {
                 let signature = signature_arr[0].substring(3, signature_arr[0].length - 3);
                 
                 // Get handle
-                let handle_elem = tweet.getElementsByClassName("css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0");
-                let handle = handle_elem[0].innerText
+                let handle_elem = null;
+                let handle = null;
+                try {
+                    handle_elem = tweet.getElementsByClassName("css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0");
+                    handle = handle_elem[0].innerText.substring(1);
+                }
+                catch (err) {
+                    console.log(err)
+                    new_elem.remove()
+                    return
+                }
 
                 // Get Message
-                let msg = tweet_text.replace(signature_arr[0], '');
+                let msg = tweet_text.replace(signature_arr[0], '').trim();
 
                 chrome.runtime.sendMessage({route: "verifyMsg", handle: handle, msg: msg, signature: signature}, function(response) {
-                    console.log("Got response")
-                    let icon = getVerifiedIcon(response['found'], response['verified']);
-                    insertVerifiedIcon(tweet_bar, icon);
+                    console.log("Updating Icon")
+                    console.log(new_elem)
+                    let icon = getVerifiedIcon(response.found, response.verified);
+                    console.log(icon)
+                    insertVerifiedIcon(new_elem, icon);
                 })
             }
             else {
                 let icon = getVerifiedIcon(false, false);
-                insertVerifiedIcon(tweet_bar, icon);
+                insertVerifiedIcon(new_elem, icon);
             }
         }
     }
@@ -182,7 +191,7 @@ waitForNElms('[aria-label="Home timeline"]', 1).then((home_timeline) => {
     observer.observe(home_timeline, { childList: true, subtree: true })
 })
 
-setInterval(checkTweets, 1000)
+window.onload = function() {setInterval(checkTweets, 2000)}
 
 console.log("Loaded")
 

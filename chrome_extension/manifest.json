@@ -18,6 +18,7 @@
           "matches": [
             "https://twitter.com/compose/tweet",
             "https://twitter.com/home",
+            "https://twitter.com/",
             "https://cpen442project.localhost:3000/"
           ],
           "css": ["./styles/snackbar_styles.css"],
