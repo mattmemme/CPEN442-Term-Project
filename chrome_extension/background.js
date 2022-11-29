@@ -144,8 +144,8 @@ async function verifyMsg(handle, msg, signatureBase64){
     let timePublished = null;
     let publicKeyAndTime = await getPublicKeyAndTime(handle);
     if (publicKeyAndTime) {
-        publicKey = publicKeyAndTime.public_key;
-        timePublished = publicKeyAndTime.time_published;
+        publicKey = publicKeyAndTime.publicKey;
+        timePublished = publicKeyAndTime.keyCreationTime;
     }
     if(!publicKey)
         return {

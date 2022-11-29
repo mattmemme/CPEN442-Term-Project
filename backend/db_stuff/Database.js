@@ -38,7 +38,7 @@ Database.prototype.getPublicKey = function(handle) {
 
             db.collection('pubkeys').findOne({ handle: handle }).then(dbEntry => {
                 if (dbEntry && dbEntry.public_key && dbEntry.handleTimeout && dbEntry.twitter_id) {
-                    resolve({publicKey: dbEntry.public_key, handleTimeout: dbEntry.handleTimeout, twitterID: dbEntry.twitter_id, keyCreationTime: db.keyCreationTime});
+                    resolve({publicKey: dbEntry.public_key, handleTimeout: dbEntry.handleTimeout, twitterID: dbEntry.twitter_id, keyCreationTime: dbEntry.keyCreationTime});
                 } else {
                     reject(new Error('No key found'));
                 }
@@ -51,7 +51,7 @@ Database.prototype.getPublicKey = function(handle) {
 
 
 Database.prototype.storePublicKey = function(document) {
-    let { twitterId, publicKey, recoveryCodes } = document;
+    let { twitterId, publicKey, recoveryCodes, handle } = document;
 
 	return this.connected.then(db =>
 		new Promise((resolve, reject) => {

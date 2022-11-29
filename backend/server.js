@@ -65,8 +65,8 @@ app.get("/public_key/:handle", async (req,res) => {
                 res.status(404).send(`User was not found`);
             }
         }
-
-        res.send(keyAndTimeout.publicKey);
+        console.log(keyAndTimeout);
+        res.json(keyAndTimeout);
         return;
         
     } catch (e) {
@@ -119,8 +119,9 @@ app.post("/publish_key", async(req,res) => {
     
     let recoveryCodes = generateRecoveryCodes(5);
     let hashedCodes = hashCodes(recoveryCodes);
+    let twitterUser = await appOnlyClient.v2.user(req.session.userId);
 
-    const document = {twitterId: req.session.userId, publicKey: key, recoveryCodes: hashedCodes};
+    const document = {twitterId: req.session.userId, publicKey: key, recoveryCodes: hashedCodes, handle: twitterUser.data.username};
     console.log(document);
     try {
         let result = await db.storePublicKey(document);
