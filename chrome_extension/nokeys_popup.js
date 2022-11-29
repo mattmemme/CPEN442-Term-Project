@@ -13,40 +13,39 @@ var update_btn = document.createElement('button');
 update_btn.id = "update-btn"
 update_btn.innerText = "Update Keys Using Recovery Codes"
 
-var successTextNode = document.createTextNode("You are all ready to go! .....documentation stuff.....");
-
-// getPublicKeyFromLS().then(pubKey => {
-//   if (!pubKey) {
-//     document.getElementById('popup-container').appendChild(generation_btn);
-//     document.getElementById('popup-container').appendChild(update_btn);
-//   } else {
-//     document.getElementById('popup-container').appendChild(successTextNode);
-//   }
-// });
-
 generation_btn.addEventListener('click', async() => {
   
-  // var prevPublicKey = await getPublicKeyFromLS();
+  var response = await fetch(`https://${DOMAIN}:${PORT}/oauth`);
+  var signInUrl = (await response.json()).url;
 
-  // if (prevPublicKey) {
-  //   console.log('Key already exists');
-  //   return;
-  // }
-  
-  // var response = await fetch(`https://${DOMAIN}:${PORT}/oauth`);
-  // var signInUrl = (await response.json()).url;
+  //console.log(signInUrl);
 
-  // console.log(signInUrl);
+  chrome.tabs.create({url: signInUrl});
 
-  // chrome.windows.create({
-  //   url: signInUrl,
-  //   type: "popup",
-  //   height: 400,
-  //   width: 400
+  // chrome.windows.create({url: signInUrl}, win => {
+  //   if (win.tabs.length) {
+  //     const firstTab = win.tabs[0];
+  //     if (firstTab.url !== signInUrl) { // the redirect already happen
+  //        const redirectURL = win.tabs[0].url;
+  //        // Do something with the redirect URL
+  //     } else {// the redirect hasn't happen yet, listen for tab changes.
+  //        function updateListener(tabId, tab) {
+  //         console.log('we are in the updateListener');
+  //          if (tabId == firstTab.id && tab.url !== signInUrl) {
+  //           console.log('we are in the conditional');
+  //            const redirectURL = tab.url;
+  //            // Do something with the redirect URL
+  //            chrome.windows.remove(win.id); // Close the window.
+  //            chrome.tabs.onUpdated.removeListener(updateListener);
+  //          }
+  //        }
+  //        chrome.tabs.onUpdated.addListener(updateListener);
+  //     }
+  //   }
   // })
 
-  await create_secret();
-  window.close();
+  //await create_secret();
+  //window.close();
 
   // const publishKeyOptions = {
   //   method: 'POST',

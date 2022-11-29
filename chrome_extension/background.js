@@ -18,12 +18,63 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     });
 });
 
+async function callbackFinished(tabId, changeInfo, tab) {
+    if (tab.url.includes('cpen442project.localhost:3000/callback') && 
+            changeInfo.status === "complete") {
+        
+        console.log('we have a valid flow for adding key...');
+
+        chrome.tabs.remove(tabId);
+        chrome.tabs.onUpdated.removeListener(callbackFinished);
+        
+        await create_secret();
+
+        const publishKeyOptions = {
+          method: 'POST',
+          headers: {
+          'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pubKey: await getPublicKeyFromLS()
+          }),
+        };
+
+        var resp = await (await fetch(`https://${DOMAIN}:${PORT}/publish_key`, publishKeyOptions))
+        
+        if (!resp.ok) {
+            console.log("Key already exists. Returning from callBackFinished");
+            return;
+        }
+        resp = await resp.json();
+
+        if (resp && resp.recovery_codes) {
+
+            chrome.tabs.create({url: chrome.runtime.getURL("/recovery_codes.html")});
+
+            
+            chrome.tabs.executeScript(tabId, foo());
+
+        } else {
+
+            console.log(' oh no shooty ');
+
+        }
+        
+    }
+}
+
+chrome.tabs.onUpdated.addListener(callbackFinished);
+
+chrome.tabs.onRemoved.addListener(function(tabid, removed) {
+    //alert("tab closed")
+})
+
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.route === "generate_signature") {
         console.log(`message before = ${request.message}`);
         generate_signature(request.message).then(sendResponse);
         return true;
-    } 
+    }
     return false;
 })
 

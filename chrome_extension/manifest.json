@@ -18,7 +18,8 @@
           "matches": [
             "https://twitter.com/compose/tweet",
             "https://twitter.com/home",
-            "https://cpen442project.localhost:3000/"
+            "https://cpen442project.localhost:3000/",
+            "https://*.twitter.com/*"
           ],
           "css": ["./styles/snackbar_styles.css"],
           "all_frames": true,
@@ -30,6 +31,7 @@
       "type": "module"
     },
     "permissions": [
-      "storage"
+      "storage",
+      "tabs"
     ]
 }
