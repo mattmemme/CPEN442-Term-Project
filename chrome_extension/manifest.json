@@ -32,6 +32,8 @@
     },
     "permissions": [
       "storage",
-      "tabs"
+      "tabs",
+      "scripting",
+      "activeTab"
     ]
 }

@@ -10,6 +10,8 @@ async function generate_signature(msg) {
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
     getPublicKeyFromLS().then(pubKey => {
+        console.log('pubKey is ');
+        console.log(pubKey);
         if (!pubKey) {
             chrome.action.setPopup({popup: "nokeys_popup.html"});
         } else {
@@ -27,7 +29,11 @@ async function callbackFinished(tabId, changeInfo, tab) {
         chrome.tabs.remove(tabId);
         chrome.tabs.onUpdated.removeListener(callbackFinished);
         
-        await create_secret();
+        var key = await generate_key();
+        var exported_key = {
+            privateKey: await crypto.subtle.exportKey("jwk", key.privateKey),
+            publicKey: await crypto.subtle.exportKey("jwk", key.publicKey),
+        }
 
         const publishKeyOptions = {
           method: 'POST',
@@ -35,31 +41,50 @@ async function callbackFinished(tabId, changeInfo, tab) {
           'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            pubKey: await getPublicKeyFromLS()
+            pubKey: exported_key.publicKey
           }),
         };
 
-        var resp = await (await fetch(`https://${DOMAIN}:${PORT}/publish_key`, publishKeyOptions))
+        var resp = await fetch(`https://${DOMAIN}:${PORT}/publish_key`, publishKeyOptions);
         
         if (!resp.ok) {
             console.log("Key already exists. Returning from callBackFinished");
             return;
         }
+
+        write_key_to_ls(key_filepath, exported_key);
+
         resp = await resp.json();
 
         if (resp && resp.recovery_codes) {
 
-            chrome.tabs.create({url: chrome.runtime.getURL("/recovery_codes.html")});
+            var getSampleHTML = function() {
+                return 'javascript:\'<!doctype html><html>' +
+                    '<head></head>' +
+                    '<body>' +
+                    '<p id="myId">page created...</p>' +
+                    '<p id="recoveryCodes">' + resp.recovery_codes.toString() + '</p>' +
+                    '</body>' +
+                    '</html>\'';
+            };
+            
+            await chrome.tabs.create({url: getSampleHTML()}, function(newTab) {
+            // await chrome.tabs.create({url: chrome.runtime.getURL("/recovery_codes.html")}, function(newTab) {
+                // chrome.scripting.executeScript({target: {tabId: newTab.id, allFrames: true}, files: ["./recovery_codes.js"]}, function() {
+                //     console.log('tab has been created. About to append recovery codes...');
+                //     // emit event to be caught by the recovery_codes.js
+                //     chrome.tabs.sendMessage(newTab.id, {route: "append_recovery_codes"}, function(response) {
+                //         console.log("this seems to have dispatched message appropriately");
+                //     });
+                // })
+                console.log('we have created the thingy')
+            });
 
             
-            chrome.tabs.executeScript(tabId, foo());
 
         } else {
-
             console.log(' oh no shooty ');
-
-        }
-        
+        }  
     }
 }
 
