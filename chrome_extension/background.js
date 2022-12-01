@@ -1,4 +1,7 @@
+// TODO: extract these into a constants file maybe?
 const key_filepath = "private"
+const LAST_ACTION_FILEPATH = "last_action"
+const RECOVERY_CODE_FILEPATH = "recovery_code"
 
 const DOMAIN = 'cpen442project.localhost'
 const PORT = '3000'
@@ -6,6 +9,33 @@ const PORT = '3000'
 async function generate_signature(msg) {
     var key = await sign(msg);
     return key
+}
+
+function generateSuccessHTML(recoveryCodes) {
+    return `javascript:\'<!doctype html><html>
+        <head></head>
+        <body>
+            <div id="recovery-codes-div">
+                <h1>Congratulations, you are all set</h1>
+                <p>Please securely store the recovery codes found below:</p>
+                <p>${recoveryCodes}</p>
+                <p>These codes will be needed to regenerate your key if it becomes lost or compromised.</p>
+            </div>
+        </body>
+    </html>\'`
+}
+
+function updateSuccessHTML(numRecoveryCodes) {
+    return `javascript:\'<!doctype html><html>
+        <head></head>
+        <body>
+            <div id="recovery-codes-div">
+                <h1>Congratulations, your public key has been reset</h1>
+                <p>You have ${numRecoveryCodes} valid recovery codes remaining</p>
+                <p>These codes will be needed to regenerate your key if it becomes lost or compromised.</p>
+            </div>
+        </body>
+    </html>\'`
 }
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -20,79 +50,101 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     });
 });
 
-async function callbackFinished(tabId, changeInfo, tab) {
+async function onSuccessfulSignin(tabId, changeInfo, tab) {
     if (tab.url.includes('cpen442project.localhost:3000/callback') && 
             changeInfo.status === "complete") {
         
-        console.log('we have a valid flow for adding key...');
-
         chrome.tabs.remove(tabId);
-        chrome.tabs.onUpdated.removeListener(callbackFinished);
+        chrome.tabs.onUpdated.removeListener(onSuccessfulSignin);
         
-        var key = await generate_key();
-        var exported_key = {
-            privateKey: await crypto.subtle.exportKey("jwk", key.privateKey),
-            publicKey: await crypto.subtle.exportKey("jwk", key.publicKey),
-        }
+        var lastAction = await read_key_from_ls_promise(LAST_ACTION_FILEPATH);
 
-        const publishKeyOptions = {
-          method: 'POST',
-          headers: {
-          'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            pubKey: exported_key.publicKey
-          }),
-        };
-
-        var resp = await fetch(`https://${DOMAIN}:${PORT}/publish_key`, publishKeyOptions);
-        
-        if (!resp.ok) {
-            console.log("Key already exists. Returning from callBackFinished");
-            return;
-        }
-
-        write_key_to_ls(key_filepath, exported_key);
-
-        resp = await resp.json();
-
-        if (resp && resp.recovery_codes) {
-
-            var getSampleHTML = function() {
-                return 'javascript:\'<!doctype html><html>' +
-                    '<head></head>' +
-                    '<body>' +
-                    '<p id="myId">page created...</p>' +
-                    '<p id="recoveryCodes">' + resp.recovery_codes.toString() + '</p>' +
-                    '</body>' +
-                    '</html>\'';
-            };
-            
-            await chrome.tabs.create({url: getSampleHTML()}, function(newTab) {
-            // await chrome.tabs.create({url: chrome.runtime.getURL("/recovery_codes.html")}, function(newTab) {
-                // chrome.scripting.executeScript({target: {tabId: newTab.id, allFrames: true}, files: ["./recovery_codes.js"]}, function() {
-                //     console.log('tab has been created. About to append recovery codes...');
-                //     // emit event to be caught by the recovery_codes.js
-                //     chrome.tabs.sendMessage(newTab.id, {route: "append_recovery_codes"}, function(response) {
-                //         console.log("this seems to have dispatched message appropriately");
-                //     });
-                // })
-                console.log('we have created the thingy')
-            });
-
-            
-
+        if (lastAction === "generation") {
+            publishKey();
+        } else if (lastAction === "update") {
+            var recoveryCode = await read_key_from_ls_promise(RECOVERY_CODE_FILEPATH);
+            updateKey(recoveryCode);
         } else {
-            console.log(' oh no shooty ');
-        }  
+            console.log("invalid last action");
+        }
     }
 }
 
-chrome.tabs.onUpdated.addListener(callbackFinished);
+chrome.tabs.onUpdated.addListener(onSuccessfulSignin);
 
-chrome.tabs.onRemoved.addListener(function(tabid, removed) {
-    //alert("tab closed")
-})
+async function updateKey(recoveryCode) {
+    var key = await generate_key();
+    var exported_key = {
+        privateKey: await crypto.subtle.exportKey("jwk", key.privateKey),
+        publicKey: await crypto.subtle.exportKey("jwk", key.publicKey),
+    }
+
+    if (!recoveryCode) {
+        console.log("no recovery code found");
+        return;
+    }
+
+    const updateKeyOptions = {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        pubKey: exported_key.publicKey,
+        recoveryCode: recoveryCode
+        }),
+    };
+
+    var resp = await fetch(`https://${DOMAIN}:${PORT}/reset_key`, updateKeyOptions);
+
+    if (!resp.ok) {
+        console.log("Key already exists. Returning from callBackFinished");
+        return;
+    }
+
+    write_key_to_ls(key_filepath, exported_key);
+
+    if (resp && resp.numRecoveryCodes) {
+        await chrome.tabs.create({url: updateSuccessHTML(resp.numRecoveryCodes)})
+    } else {
+        console.log('response from publishKey endpoint does not contain all the necessary fields');
+    }
+}
+
+async function publishKey() {
+    var key = await generate_key();
+    var exported_key = {
+        privateKey: await crypto.subtle.exportKey("jwk", key.privateKey),
+        publicKey: await crypto.subtle.exportKey("jwk", key.publicKey),
+    }
+
+    const publishKeyOptions = {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        pubKey: exported_key.publicKey
+        }),
+    };
+
+    var resp = await fetch(`https://${DOMAIN}:${PORT}/publish_key`, publishKeyOptions);
+    
+    if (!resp.ok) {
+        console.log("Key already exists. Returning from callBackFinished");
+        return;
+    }
+
+    write_key_to_ls(key_filepath, exported_key);
+
+    resp = await resp.json();
+
+    if (resp && resp.recovery_codes) {
+        await chrome.tabs.create({url: generateSuccessHTML(resp.recovery_codes.toString().replaceAll(',', ', '))})
+    } else {
+        console.log('response from publishKey endpoint does not contain all the necessary fields');
+    }
+}
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.route === "generate_signature") {
@@ -102,7 +154,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
     return false;
 })
-
 
 export async function create_secret() {
     var key = await read_key_from_ls_promise(key_filepath);
@@ -157,7 +208,8 @@ async function sign(msg) {
     return result_of_sign;
 }
 
-var write_key_to_ls = function (id, key) {
+// TODO: Make this agnostic of key, just mkae it a write to ls
+export var write_key_to_ls = function (id, key) {
     return new Promise(function (resolve, reject) {
         chrome.storage.local.set({[id]: key}, function() {
             resolve();
@@ -165,6 +217,7 @@ var write_key_to_ls = function (id, key) {
     })
 }
 
+// TODO: Make this agnostic of key, just mkae it a read from ls
 var read_key_from_ls_promise = function(id) {
     return new Promise(function(resolve, reject) {
         chrome.storage.local.get(id, function(result) {
