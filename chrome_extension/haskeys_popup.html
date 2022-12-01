@@ -1,12 +1,95 @@
 <html>
   <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="./styles/popup_stylesheet.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
   </head>
   <body>
-    <div id="popup-container">
-      <h1>Social Sign Extension</h1>
-      <h2>Getting started!</h2>
-      <p>Documentation here ...</p>
+    <div class="row gy-2" id="popup-container">
+      <div class="col-12">
+        <h1>Social Sign Extension</h1>
+      </div>
+      <div class="col-12">
+        <form>
+          <div class="mb-3">
+            <label for="updateCode" class="form-label">Enter update code</label>
+            <input type="text" class="form-control" id="updateCode" aria-describedby="updateHelp">
+            <div id="updateHelp" class="form-text">If you have lost your secret key, you may reset it by entering a backup code.</div>
+          </div>
+          <button id="update-btn" type="submit" class="btn btn-primary btn-sm">Update Secret Key</button>
+        </form>
+      </div>
+      <div class="col-12">
+        <h3>
+          Documentation &#128218
+        </h3>
+
+        <p class="form-text">
+          Social Sign provides an extra layer of verification to every Tweet you see on Twitter.
+        </p>
+        
+        <p class="form-text">
+          Before posting your Tweet, please click the new ink pen button in the Tweet menu bar to copy your digital signature to your clipboard. Paste the copied text to the end of your Tweet message.
+        </p>
+
+        <p class="form-text">
+          Refer to the list of icons below to determine the validity of the author of a Twitter post.
+        </p>
+
+        <div class="row gy-3">
+          <div class="col-2 doc-icon">
+            <svg width="25" height="25">
+              <path fill="#F1F500" d="M11,9.153v7.652c0,0.277,0.224,0.5,0.5,0.5s0.5-0.223,0.5-0.5V9.153c0-0.276-0.224-0.5-0.5-0.5S11,8.877,11,9.153z"/>
+              <path fill="#F1F500" d="M22.892,23.166L11.947,1.276c-0.17-0.339-0.725-0.339-0.895,0l-11,22c-0.077,0.155-0.069,0.339,0.021,0.486
+              C0.166,23.91,0.327,24,0.5,24h22c0.007,0,0.015,0,0.02,0c0.276,0,0.5-0.224,0.5-0.5C23.02,23.372,22.972,23.254,22.892,23.166z
+              M1.309,23L11.5,2.618L21.691,23H1.309z"/>
+              <circle fill="#F1F500" cx="11.5" cy="20" r="1"/>
+            </svg>
+          </div>
+          <div class="col-10">
+            <p class="form-text">
+              Warning, the author cannot be found. The author may not have signed up to use Social Sign.
+            </p>
+          </div>
+        </div>
+
+        <div class="row gy-3">
+          <div class="col-2 doc-icon">
+            <svg width="25" height="25">
+              <path fill="#2FFF0E" d="M23.623,0.218c-0.433-0.344-1.062-0.271-1.405,0.161L9.416,16.501l-4.207-4.207c-0.391-0.391-1.024-0.391-1.414,0
+              c-0.391,0.392-0.391,1.024,0,1.414l5,5c0.188,0.188,0.442,0.293,0.707,0.293c0.019,0,0.038-0.001,0.057-0.002
+              c0.285-0.016,0.549-0.153,0.727-0.376l13.5-17C24.127,1.19,24.056,0.562,23.623,0.218z"/>
+              <path fill="#2FFF0E" d="M18.551,11.021c-0.538,0.123-0.875,0.659-0.752,1.197c0.134,0.585,0.202,1.185,0.202,1.783c0,4.411-3.589,8-8,8
+              c-4.411,0-8-3.589-8-8s3.589-8,8-8c1.248,0,2.444,0.28,3.555,0.832c0.494,0.247,1.095,0.044,1.341-0.451
+              c0.246-0.494,0.044-1.095-0.451-1.34c-1.39-0.691-2.885-1.041-4.445-1.041c-5.514,0-10,4.485-10,10c0,5.514,4.486,10,10,10
+              c5.514,0,10-4.486,10-10c0-0.748-0.085-1.498-0.252-2.229C19.626,11.234,19.091,10.896,18.551,11.021z"/>
+            </svg>
+          </div>
+          <div class="col-10">
+            <p class="form-text">
+              The author is verified, they have used the expected secret key to sign their tweet.
+            </p>
+          </div>
+        </div>
+
+        <div class="row gy-3">
+          <div class="col-2 doc-icon">
+            <svg width="25" height="25">
+              <path fill="#FF390E" d="M11.5,0C5.159,0,0,5.159,0,11.5S5.159,23,11.5,23S23,17.841,23,11.5S17.841,0,11.5,0z M11.5,22C5.71,22,1,17.29,1,11.5
+              S5.71,1,11.5,1S22,5.71,22,11.5S17.29,22,11.5,22z"/>
+              <path fill="#FF390E" d="M16.096,6.904c-0.195-0.195-0.512-0.195-0.707,0L11.5,10.793L7.61,6.904c-0.195-0.195-0.512-0.195-0.707,0
+              s-0.195,0.512,0,0.707l3.889,3.889l-3.889,3.889c-0.195,0.195-0.195,0.512,0,0.707c0.098,0.098,0.226,0.146,0.354,0.146
+              s0.256-0.049,0.354-0.146l3.89-3.889l3.889,3.889c0.098,0.098,0.226,0.146,0.354,0.146s0.256-0.049,0.354-0.146
+              c0.195-0.195,0.195-0.512,0-0.707L12.207,11.5l3.889-3.889C16.291,7.416,16.291,7.1,16.096,6.904z"/>
+            </svg>
+          </div>
+          <div class="col-10">
+            <p class="form-text">
+              The author is not verified. Someone may be trying to impersonate the owner of this account.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
