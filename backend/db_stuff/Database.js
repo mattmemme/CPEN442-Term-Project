@@ -115,9 +115,8 @@ Database.prototype.updatePublicKey = function(twitterId, newPublicKey, newRecove
 			}
 
             db.collection('pubkeys').updateOne({ twitter_id: twitterId }, updateDoc).then(dbEntry => {
-				console.log(dbEntry);
                 if (dbEntry && dbEntry.acknowledged && dbEntry.modifiedCount == 1) {
-                    resolve(dbEntry.modifiedCount);
+                    resolve(newRecoveryCodes.length);
                 } else {
                     reject(new Error('No key found'));
                 }
