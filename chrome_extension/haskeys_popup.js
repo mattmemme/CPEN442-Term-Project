@@ -15,6 +15,6 @@ update_btn.addEventListener('click', async() => {
     var signInUrl = (await response.json()).url;
 
     await write_key_to_ls(LAST_ACTION_FILEPATH, "update");
-    await write_key_to_ls(RECOVERY_CODE_FILEPATH, document.getElementById("update-input").value);
+    await write_key_to_ls(RECOVERY_CODE_FILEPATH, document.getElementById("updateCode").value);
     chrome.tabs.create({url: signInUrl});
 });
