@@ -29,16 +29,16 @@ function Database(mongoUrl, dbName){
 }
 
 
-Database.prototype.getPublicKey = function(twitterId) {
+Database.prototype.getPublicKey = function(handle) {
     return this.connected.then(db =>
 		new Promise((resolve, reject) => {
-			if (!twitterId) {
+			if (!handle) {
                 reject(new Error('Invalid input'));
 			}
 
-            db.collection('pubkeys').findOne({ twitter_id: twitterId }).then(dbEntry => {
-                if (dbEntry && dbEntry.public_key) {
-                    resolve(dbEntry.public_key);
+            db.collection('pubkeys').findOne({ handle: handle }).then(dbEntry => {
+                if (dbEntry && dbEntry.public_key && dbEntry.handleTimeout && dbEntry.twitter_id) {
+                    resolve({publicKey: dbEntry.public_key, handleTimeout: dbEntry.handleTimeout, twitterID: dbEntry.twitter_id, keyCreationTime: dbEntry.keyCreationTime});
                 } else {
                     reject(new Error('No key found'));
                 }
@@ -51,7 +51,7 @@ Database.prototype.getPublicKey = function(twitterId) {
 
 
 Database.prototype.storePublicKey = function(document) {
-    let { twitterId, publicKey, recoveryCodes } = document;
+    let { twitterId, publicKey, recoveryCodes, handle } = document;
 
 	return this.connected.then(db =>
 		new Promise((resolve, reject) => {
@@ -66,7 +66,10 @@ Database.prototype.storePublicKey = function(document) {
 					var pubKeyEntry = {
 						"twitter_id": twitterId,
 						"public_key": publicKey,
-						"recovery_codes": recoveryCodes
+						"recovery_codes": recoveryCodes,
+						"keyCreationTime": Date.now(),
+						"handle": handle,
+						"handleTimeout": Date.now() + 1000 * 60 * 10
 					}
 		
 					db.collection('pubkeys').insertOne(pubKeyEntry).then(() => {
@@ -110,7 +113,8 @@ Database.prototype.updatePublicKey = function(twitterId, newPublicKey, newRecove
 			const updateDoc = {
 				$set: {
 					public_key: newPublicKey,
-					recovery_codes: newRecoveryCodes
+					recovery_codes: newRecoveryCodes,
+					keyCreationTime: Date.now(),
 				}
 			}
 
@@ -125,6 +129,36 @@ Database.prototype.updatePublicKey = function(twitterId, newPublicKey, newRecove
             })
         })
 	)
+}
+
+Database.prototype.updateHandle = function(twitterID, handle){
+	return this.connected.then(db => {
+		new Promise((resolve, reject) => {
+			if (!twitterID)
+				reject(new Error("Invalid ID"));
+			
+			const updateDoc = {
+				$set: {
+					handle: handle,
+					handleTimeout: Date.now() + 1000 * 60 * 10
+				}
+			};
+
+			db.collection('pubkeys').updateOne({ twitter_id: twitterID }, updateDoc).then(dbEntry => {
+				console.log(dbEntry);
+                if (dbEntry && dbEntry.acknowledged && dbEntry.modifiedCount == 1) {
+                    resolve(dbEntry.modifiedCount);
+                } else {
+                    reject(new Error('No key found'));
+                }
+            }).catch((err) => {
+                reject(new Error(err))
+            })
+
+
+
+		})
+	})
 }
 
 module.exports = Database;

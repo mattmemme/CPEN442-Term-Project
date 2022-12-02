@@ -170,7 +170,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         console.log(`message before = ${request.message}`);
         generate_signature(request.message).then(sendResponse);
         return true;
-    }
+    } else if (request.route === "verifyMsg") {
+        verifyMsg(request.handle, request.msg, request.signature).then(sendResponse);
+        return true
+    }   
     return false;
 })
 
@@ -182,6 +185,7 @@ export async function create_secret() {
             privateKey: await crypto.subtle.exportKey("jwk", key.privateKey),
             publicKey: await crypto.subtle.exportKey("jwk", key.publicKey),
         }
+        console.log(JSON.stringify(exported_key.publicKey))
         write_key_to_ls(key_filepath, exported_key);
     } else {
         console.log('Error: key already found');
@@ -211,8 +215,6 @@ async function sign(msg) {
     }
     var private_key = await crypto.subtle.importKey("jwk", key_pair.privateKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]);
 
-    console.log('we about to sign');
-    console.log(private_key);
     console.log(encoder.encode(msg));
 
     var result_of_sign = _arrayBufferToBase64(await crypto.subtle.sign({
@@ -267,7 +269,7 @@ function _arrayBufferToBase64( buffer ) {
 
 // From 
 function _base64ToArrayBuffer(base64) {
-    var binary_string = window.atob(base64);
+    var binary_string = atob(base64);
     var len = binary_string.length;
     var bytes = new Uint8Array(len);
     for (var i = 0; i < len; i++) {
@@ -288,30 +290,31 @@ async function getPublicKeyAndTime(handle) {
     } catch(e) {
         console.log(e)
     } finally {
-        return retVal;
+        return publicKey;
     }
 }
 
 // Expect base64 signature
 async function verifyMsg(handle, msg, signatureBase64){
-    let publicKeyAndTime = await getPublicKey(handle);
-    let publicKey = publicKeyAndTime.public_key;
-    let timePublished = publicKeyAndTime.time_published;
+    let publicKey = null;
+    let timePublished = null;
+    let publicKeyAndTime = await getPublicKeyAndTime(handle);
+    if (publicKeyAndTime) {
+        publicKey = publicKeyAndTime.publicKey;
+        timePublished = publicKeyAndTime.keyCreationTime;
+    }
     if(!publicKey)
-        return {found: false};
+        return {
+            found: false, 
+            verified: false
+        };
     let signature = _base64ToArrayBuffer(signatureBase64);
+    console.log(msg,publicKey,signatureBase64);
+    publicKey = await crypto.subtle.importKey("jwk", publicKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["verify"]);
+    var encoder = new TextEncoder();
     return {
             timePublished: timePublished, 
             found: true, 
-            verified: await crypto.subtle.verify({name: "ECDSA", hash: {name: "SHA-256"}}, publicKey, signature, msg)
+            verified: await crypto.subtle.verify({name: "ECDSA", hash: {name: "SHA-256"}}, publicKey, signature, encoder.encode(msg))
         };
 }
-/*
-chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
-    if (request.route === "verifyMsg") {
-        response = await verifyMsg(request.handle, request.msg, request.signature);
-        sendResponse(response);
-
-                return true
-    }   return false;
-})*/

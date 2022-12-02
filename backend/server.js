@@ -45,20 +45,30 @@ https.createServer(options, app).listen(port)
 app.get("/public_key/:handle", async (req,res) => {
     // Ask Twitter API for ID
     let twitterID;
-    try {
-        let twitterUser = await appOnlyClient.v2.userByUsername(req.params.handle);
-        console.log(twitterUser);
-        twitterID = twitterUser.data.id;
-    } catch (e) {
-        console.log(e)
-        res.status(500).send("Error querying Twitter API");
-        return;
-    }
+    // try {
+    //     let twitterUser = await appOnlyClient.v2.userByUsername(req.params.handle);
+    //     console.log(twitterUser);
+    //     twitterID = twitterUser.data.id;
+    // } catch (e) {
+    //     console.log(e)
+    //     res.status(500).send("Error querying Twitter API");
+    //     return;
+    // }
     
     try {  
-        let publicKey = await db.getPublicKey(twitterID);
-        res.json({public_key: publicKey});
+        let keyAndTimeout = await db.getPublicKey(req.params.handle);
+        if (Date.now() > keyAndTimeout.handleTimeout){
+            let twitterUser = await appOnlyClient.v2.user(keyAndTimeout.twitterID);
+            handle = twitterUser.data.username;
+            if(handle !== req.params.handle){
+                db.updateHandle(twitterUser.data.id, handle)
+                res.status(404).send(`User was not found`);
+            }
+        }
+        console.log(keyAndTimeout);
+        res.json(keyAndTimeout);
         return;
+        
     } catch (e) {
         console.log(e);
         res.status(404).send(`User was not found`);
@@ -94,7 +104,6 @@ app.get('/callback', async(req, res) => {
 
   const tempClient = new TwitterApi({ appKey: CONFIG.API_KEY, appSecret: CONFIG.API_SECRET, accessToken: token, accessSecret: savedSecret });
   const { accessToken, accessSecret, screenName, userId } = await tempClient.login(verifier);
-  // Set userID ie. authenticate user.
   req.session.userId = userId;
   res.render('callback', { accessToken, accessSecret, screenName, userId });
 });
@@ -110,8 +119,9 @@ app.post("/publish_key", async(req,res) => {
     
     let recoveryCodes = generateRecoveryCodes(5);
     let hashedCodes = hashCodes(recoveryCodes);
+    let twitterUser = await appOnlyClient.v2.user(req.session.userId);
 
-    const document = {twitterId: req.session.userId, publicKey: key, recoveryCodes: hashedCodes};
+    const document = {twitterId: req.session.userId, publicKey: key, recoveryCodes: hashedCodes, handle: twitterUser.data.username};
     console.log(document);
     try {
         let result = await db.storePublicKey(document);
@@ -204,7 +214,6 @@ app.get('/oauth', async(req, res) => {
 
 const requestClient = new TwitterApi({appKey: CONFIG.API_KEY, appSecret: CONFIG.API_SECRET});
 const appOnlyClient = new TwitterApi(CONFIG.BEARER_TOKEN);
-
 
 
 
