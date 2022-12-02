@@ -146,7 +146,6 @@ app.post("/reset_key", async(req,res) => {
     const key = req.body.newPubKey;
     const recoveryCode = req.body.recoveryCode; 
     
-    
     let hashedCodes = await db.getRecoveryCodes(req.session.userId);
 
     // verifyRecoveryCode will mutate hashedCodes and removes the correct recovery code.
@@ -159,7 +158,7 @@ app.post("/reset_key", async(req,res) => {
 
     try{
         let result = await db.updatePublicKey(req.session.userId, key, hashedCodes);
-        res.json(result);
+        res.json({ numRecoveryCodes: result });
     } catch(e) {
         console.log(e);
         res.status(500).end();
@@ -197,11 +196,19 @@ function verifyRecoveryCode(recoveryCode, hashedCodes){
 }
 
 app.get('/oauth', async(req, res) => {
+    console.log('we are attempting to get oauth');
     const link = await requestClient.generateAuthLink(`https://${CONFIG.DOMAIN}:${CONFIG.PORT}/callback`);
+
+    console.log("link");
+    console.log(link);
+    console.log("link.url");
+    console.log(link.url);
+
     // Save token secret to use it after callback
     req.session.oauthToken = link.oauth_token;
     req.session.oauthSecret = link.oauth_token_secret;
 
+    console.log('we are about to send url to complete process');
     res.json({url: link.url})
 })
 
