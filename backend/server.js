@@ -188,6 +188,12 @@ function verifyRecoveryCode(recoveryCode, hashedCodes){
 app.get('/oauth', async(req, res) => {
     console.log('we are attempting to get oauth');
     const link = await requestClient.generateAuthLink(`https://${CONFIG.DOMAIN}:${CONFIG.PORT}/callback`);
+
+    console.log("link");
+    console.log(link);
+    console.log("link.url");
+    console.log(link.url);
+
     // Save token secret to use it after callback
     req.session.oauthToken = link.oauth_token;
     req.session.oauthSecret = link.oauth_token_secret;

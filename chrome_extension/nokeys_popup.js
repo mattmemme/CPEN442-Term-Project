@@ -26,12 +26,19 @@ generation_btn.addEventListener('click', async() => {
 })
 
 
-update_btn.addEventListener('click', async() => {
+update_btn.addEventListener('click', async(event) => {
   
+  event.preventDefault();
+
+  console.log("we are attempting to update our keys")
+
   var response = await fetch(`https://${DOMAIN}:${PORT}/oauth`);
-  var signInUrl = (await response.json()).url;
+  var signInUrl = (await response.json()).url;    
+
+  console.log(signInUrl);
 
   await write_key_to_ls(LAST_ACTION_FILEPATH, "update");
   await write_key_to_ls(RECOVERY_CODE_FILEPATH, document.getElementById("updateCode").value);
   chrome.tabs.create({url: signInUrl});
+  
 });

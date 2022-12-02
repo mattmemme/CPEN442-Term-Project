@@ -38,6 +38,18 @@ function updateSuccessHTML(numRecoveryCodes) {
     </html>\'`
 }
 
+function updateFailHTML() {
+    return `javascript:\'<!doctype html><html>
+        <head></head>
+        <body>
+            <div id="recovery-codes-div">
+                <h1>Oops, something went wrong</h1>
+                <p>Unable to reset key</p>
+            </div>
+        </body>
+    </html>\'`
+}
+
 chrome.storage.onChanged.addListener(function(changes, namespace) {
     getPublicKeyFromLS().then(pubKey => {
         console.log('pubKey is ');
@@ -54,8 +66,10 @@ async function onSuccessfulSignin(tabId, changeInfo, tab) {
     if (tab.url.includes('cpen442project.localhost:3000/callback') && 
             changeInfo.status === "complete") {
         
+        console.log('we are in successfulSignin')
+
         chrome.tabs.remove(tabId);
-        chrome.tabs.onUpdated.removeListener(onSuccessfulSignin);
+        // chrome.tabs.onUpdated.removeListener(onSuccessfulSignin);
         
         var lastAction = await read_key_from_ls_promise(LAST_ACTION_FILEPATH);
 
@@ -90,7 +104,7 @@ async function updateKey(recoveryCode) {
         'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-        pubKey: exported_key.publicKey,
+        newPubKey: exported_key.publicKey,
         recoveryCode: recoveryCode
         }),
     };
@@ -99,10 +113,15 @@ async function updateKey(recoveryCode) {
 
     if (!resp.ok) {
         console.log("Key already exists. Returning from callBackFinished");
+        await chrome.tabs.create({url: updateFailHTML()})
         return;
     }
 
+    console.log('we have proceeded....why');
+
     write_key_to_ls(key_filepath, exported_key);
+
+    resp = await resp.json();
 
     if (resp && resp.numRecoveryCodes) {
         await chrome.tabs.create({url: updateSuccessHTML(resp.numRecoveryCodes)})
