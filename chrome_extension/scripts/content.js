@@ -12,7 +12,7 @@ function getSignature(msg) {
           snackbar.innerText = "Key does not exist! Click extension icon."
         }
         else {
-          navigator.clipboard.writeText(response);
+          navigator.clipboard.writeText('## ' + response + ' ##');
           snackbar.innerText = "Copied to clipboard!";
         }
         snackbar.className = "show";
@@ -96,18 +96,24 @@ function checkTweets() {
         // Insert icon if it does not exist
         let tweet_bar = tweet.getElementsByClassName("css-1dbjc4n r-1ta3fxp r-18u37iz r-1wtj0ep r-1s2bzr4 r-1mdbhws")[0];
         if (!tweet_bar.getElementsByClassName("auth-icon").length) {
-            // Get icon colour based on tweet text
+            // Get handle
+
+
+            // Get text and parse it
             let tweet_text_span = tweet.getElementsByClassName("css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0")[0];
-            let tweet_text = tweet_text_span;
+            let tweet_text = tweet_text_span.innerText;
+            /*
+            chrome.runtime.sendMessage({route: "verifyMsg", handle: handle, msg: msg, signature: signature}, function(response) {
+                // Add new element
+                let new_elem = tweet_bar.lastChild.cloneNode(true);
+                new_elem.firstChild.setAttribute("class", "auth-icon");
+                tweet_bar.lastChild.insertAdjacentElement("afterend", new_elem);
 
-            // Add new element
-            let new_elem = tweet_bar.lastChild.cloneNode(true);
-            new_elem.firstChild.setAttribute("class", "auth-icon");
-            tweet_bar.lastChild.insertAdjacentElement("afterend", new_elem);
-
-            // Change icon and set colour
-            let svg_icon = new_elem.getElementsByTagName("g")[0]
-            svg_icon.innerHTML = getVerifiedIcon(tweet_text.innerHTML);
+                // Change icon and set colour
+                let svg_icon = new_elem.getElementsByTagName("g")[0]
+                svg_icon.innerHTML = getVerifiedIcon(response);
+            })
+            */
         }
     }
 }

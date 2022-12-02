@@ -57,7 +57,7 @@ app.get("/public_key/:handle", async (req,res) => {
     
     try {  
         let publicKey = await db.getPublicKey(twitterID);
-        res.send(publicKey);
+        res.json({public_key: publicKey});
         return;
     } catch (e) {
         console.log(e);
@@ -94,6 +94,7 @@ app.get('/callback', async(req, res) => {
 
   const tempClient = new TwitterApi({ appKey: CONFIG.API_KEY, appSecret: CONFIG.API_SECRET, accessToken: token, accessSecret: savedSecret });
   const { accessToken, accessSecret, screenName, userId } = await tempClient.login(verifier);
+  // Set userID ie. authenticate user.
   req.session.userId = userId;
   res.render('callback', { accessToken, accessSecret, screenName, userId });
 });
@@ -135,7 +136,6 @@ app.post("/reset_key", async(req,res) => {
     const key = req.body.newPubKey;
     const recoveryCode = req.body.recoveryCode; 
     
-    
     let hashedCodes = await db.getRecoveryCodes(req.session.userId);
 
     // verifyRecoveryCode will mutate hashedCodes and removes the correct recovery code.
@@ -148,7 +148,7 @@ app.post("/reset_key", async(req,res) => {
 
     try{
         let result = await db.updatePublicKey(req.session.userId, key, hashedCodes);
-        res.json(result);
+        res.json({ numRecoveryCodes: result });
     } catch(e) {
         console.log(e);
         res.status(500).end();
@@ -184,6 +184,23 @@ function verifyRecoveryCode(recoveryCode, hashedCodes){
     }
     return false;
 }
+
+app.get('/oauth', async(req, res) => {
+    console.log('we are attempting to get oauth');
+    const link = await requestClient.generateAuthLink(`https://${CONFIG.DOMAIN}:${CONFIG.PORT}/callback`);
+
+    console.log("link");
+    console.log(link);
+    console.log("link.url");
+    console.log(link.url);
+
+    // Save token secret to use it after callback
+    req.session.oauthToken = link.oauth_token;
+    req.session.oauthSecret = link.oauth_token_secret;
+
+    console.log('we are about to send url to complete process');
+    res.json({url: link.url})
+})
 
 const requestClient = new TwitterApi({appKey: CONFIG.API_KEY, appSecret: CONFIG.API_SECRET});
 const appOnlyClient = new TwitterApi(CONFIG.BEARER_TOKEN);
