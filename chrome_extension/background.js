@@ -303,12 +303,20 @@ async function verifyMsg(handle, msg, signatureBase64){
         publicKey = publicKeyAndTime.publicKey;
         timePublished = publicKeyAndTime.keyCreationTime;
     }
-    if(!publicKey)
+    if(!publicKey){
         return {
             found: false, 
             verified: false
         };
+    } else if (!signatureBase64) { 
+        return {
+            found: true, 
+            verified: false
+        };
+    }
+    
     let signature = _base64ToArrayBuffer(signatureBase64);
+
     console.log(msg,publicKey,signatureBase64);
     publicKey = await crypto.subtle.importKey("jwk", publicKey, { name: "ECDSA", namedCurve: "P-256" }, true, ["verify"]);
     var encoder = new TextEncoder();

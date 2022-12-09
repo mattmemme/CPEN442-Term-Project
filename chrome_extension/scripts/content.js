@@ -1,6 +1,8 @@
 // Send message to background script to get signature
 function getSignature(msg) {
     console.log("Copied to Clipboard again");
+    console.log('msg');
+    console.log(msg);
     chrome.runtime.sendMessage({route: "generate_signature", message: msg}, function(response) {
         console.log(response);
 
@@ -69,9 +71,9 @@ function handleClick(event) {
 function getVerifiedIcon(found, verified) {
     if (!found) {
         // Missing signature
-        return `<path fill="#F2D707" ${warning_icon.d1}/>
-        <path fill="#F2D707" ${warning_icon.d2}/>
-        <circle fill="#F2D707" ${warning_icon.circle}/>`
+        return `<path fill="#EBBA34" ${warning_icon.d1}/>
+        <path fill="#EBBA34" ${warning_icon.d2}/>
+        <circle fill="#EBBA34" ${warning_icon.circle}/>`
     }
     else if (verified) {
         // Success
@@ -108,37 +110,48 @@ function checkTweets() {
             let tweet_text_elem = tweet.getElementsByClassName("css-901oao r-18jsvk2 r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-bnwqim r-qvutc0")[0];
             let tweet_text = tweet_text_elem.innerText;
             let signature_arr = tweet_text.match('## [A-Za-z0-9+/=]{88} ##');
-            if (signature_arr) {
-                let signature = signature_arr[0].substring(3, signature_arr[0].length - 3);
-                
-                // Get handle
-                let handle_elem = null;
-                let handle = null;
-                try {
-                    handle_elem = tweet.getElementsByClassName("css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0");
-                    handle = handle_elem[0].innerText.substring(1);
-                }
-                catch (err) {
-                    console.log(err)
-                    new_elem.remove()
-                    return
-                }
 
-                // Get Message
-                let msg = tweet_text.replace(signature_arr[0], '').trim();
-
-                chrome.runtime.sendMessage({route: "verifyMsg", handle: handle, msg: msg, signature: signature}, function(response) {
-                    console.log("Updating Icon")
-                    console.log(new_elem)
-                    let icon = getVerifiedIcon(response.found, response.verified);
-                    console.log(icon)
-                    insertVerifiedIcon(new_elem, icon);
-                })
+            try {
+                var signature = signature_arr[0].substring(3, signature_arr[0].length - 3);
             }
-            else {
+            catch {
+                var signature = null
+            }
+            
+            // Get handle
+            let handle_elem = null;
+            let handle = null;
+            try {
+                handle_elem = tweet.getElementsByClassName("css-901oao css-1hf3ou5 r-14j79pv r-18u37iz r-37j5jr r-a023e6 r-16dba41 r-rjixqe r-bcqeeo r-qvutc0");
+                handle = handle_elem[0].innerText.substring(1);
+            }
+            catch (err) {
+                console.log(err)
+                new_elem.remove()
+                return
+            }
+
+            // Get Message
+            try {
+                var msg = tweet_text.replace(signature_arr[0], '').trim();
+            }
+            catch {
+                var msg = null
+            }
+            
+
+            chrome.runtime.sendMessage({route: "verifyMsg", handle: handle, msg: msg, signature: signature}, function(response) {
+                console.log("Updating Icon")
+                console.log(new_elem)
+                let icon = getVerifiedIcon(response.found, response.verified);
+                console.log(icon)
+                insertVerifiedIcon(new_elem, icon);
+            })
+            
+            /*
                 let icon = getVerifiedIcon(false, false);
                 insertVerifiedIcon(new_elem, icon);
-            }
+            */
         }
     }
 }
