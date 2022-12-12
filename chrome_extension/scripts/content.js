@@ -15,7 +15,7 @@ function getSignature(msg) {
         }
         else {
           navigator.clipboard.writeText('## ' + response + ' ##');
-          snackbar.innerText = "Copied to clipboard!";
+          snackbar.innerText = 'Copied to Clipboard. Paste signature into message box before hitting "Tweet".';
         }
         snackbar.className = "show";
         setTimeout(function(){ snackbar.className = snackbar.className.replace("show", ""); }, 3000);
@@ -50,6 +50,7 @@ function createButton(elemBar, new_btn_id) {
     elemBar[0].lastChild.insertAdjacentElement("beforebegin", newElem)
     elemBar[0].children[6].firstChild.firstChild.firstChild.innerHTML = `<path ` + ink_pen_icon.d1 + `/>
     <path ` + ink_pen_icon.d2 + `/>`
+    elemBar[0].children[6].title = "Generate Signature"
     elemBar[0].children[6].onclick = handleClick;
     elemBar[0].children[6].id = new_btn_id;
 }
